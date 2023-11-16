@@ -1,3 +1,4 @@
+import jax
 import jax.numpy as jnp
 from typing import Literal
 
@@ -56,3 +57,9 @@ def positional_decoding(v: jnp.ndarray, method=Literal["trig", "inv_proj", "fold
           
         case "stereographic":
             return v[:, :-1] / (1 - v[:, -1, None])
+
+def uniform_ball_samples(rng: jax.Array, N: int, d: int, r: float):
+    inputs = jax.random.normal(rng, shape=[N, d])
+    inputs /= jnp.linalg.norm(inputs, axis=-1)[:, None]
+    radii = jnp.power(jax.random.uniform(rng, minval=0., maxval=jnp.power(r, d), shape=[N]), 1 / d)
+    return inputs * radii[:, None]
