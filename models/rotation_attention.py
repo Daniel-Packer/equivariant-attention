@@ -148,8 +148,8 @@ def train(
     #     else init_values
     # )
     beta = init_beta
-    keys = encoding(X_train)[:n_keys]
-    values = Y_train[:n_keys]
+    keys = jax.random.choice(rngs[0], X_train_enc, shape = [n_keys]) + (jax.random.normal(rngs[1], shape=[n_keys, X_train_enc.shape[-1]]) * 1e-6)
+    values = jax.random.choice(rngs[0], Y_train, shape = [n_keys]) + (jax.random.normal(rngs[1], shape=[n_keys, Y_train.shape[-1]]) * 1e-6)
 
     key_reps = group_samples(n_group_samples, X_train_enc.shape[-1] - 2)
     value_reps = group_samples(n_group_samples, Y_train.shape[-1] - 2)
