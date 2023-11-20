@@ -13,4 +13,7 @@ def check_equivariance(
     f_orbit_x = jax.vmap(f)(orbit_x)
     f_x = f(x)
     orbit_f_x = jnp.sum(codomain_reps * f_x[None, None, :], axis=-1)
-    return jnp.sqrt(jnp.sum(jnp.square(f_orbit_x - orbit_f_x), axis=-1))
+    return jnp.max(jnp.sqrt(jnp.sum(jnp.square(f_orbit_x - orbit_f_x), axis=-1)))
+
+
+batched_check_equivariance = jax.vmap(check_equivariance, (None, 0, None, None))
