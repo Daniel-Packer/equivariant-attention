@@ -21,7 +21,6 @@ class TranslationAttention:
                 case "values":
                     self.values = val
                     self.fft_values = jnp.fft.fft(self.values)
-                    
 
     def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
         return self._call_fn(x, self.fft_keys, self.fft_values)
@@ -33,23 +32,49 @@ class TranslationAttention:
         except:
             raise ValueError("x and y are not the same shape")
 
-    
+
 @jax.jit
 def update(params: list[jnp.ndarray], x: jnp.ndarray, y: jnp.ndarray, lr: float):
     grads = jax.grad(loss)(params, x, y)
     return [p - lr * grad_p for p, grad_p in zip(params, grads)]
-    
+
+
 def loss(params: list[jnp.ndarray], x: jnp.ndarray, y: jnp.ndarray):
     pred_y = batched_call_fn(x, *params)
-    return jnp.sum(jnp.square(pred_y - y))
+    return jnp.mean(jnp.square(jnp.abs(pred_y - y)))
+
 
 @jax.jit
-def batched_call_fn(x: jnp.ndarray, fft_keys: jnp.ndarray, fft_values: jnp.ndarray, beta: float):
-    return jax.vmap(call_fn, in_axes = [0, None, None, None])(x, fft_keys, fft_values, beta)
+def batched_call_fn(
+    x: jnp.ndarray, fft_keys: jnp.ndarray, fft_values: jnp.ndarray, beta: float
+):
+    return jax.vmap(call_fn, in_axes=[0, None, None, None])(
+        x, fft_keys, fft_values, beta
+    )
 
 
-def call_fn(x: jnp.ndarray, fft_keys: jnp.ndarray, fft_values: jnp.ndarray, beta: float):
+def call_fn(
+    x: jnp.ndarray, fft_keys: jnp.ndarray, fft_values: jnp.ndarray, beta: float
+):
     fft_x = jnp.fft.fft(x)
-    x_conv_K = jnp.real(jnp.fft.ifft(fft_x[None, :] * fft_keys[:, :]))
-    weights = jax.nn.softmax(beta * x_conv_K, axis=[0, 1])
-    return jnp.sum(jnp.real(jnp.fft.ifft(jnp.fft.fft(weights) * fft_values[:, :])), axis = 0)
+    x_corr_K = jnp.fft.ifft(fft_x[None, :] * fft_keys[:, :])
+    weights = jnp.flip(jax.nn.softmax(jnp.real(beta * x_corr_K), axis=[0, 1]), axis=-1)
+    return jnp.flip(jnp.sum(jnp.fft.ifft(jnp.fft.fft(weights) * fft_values[:, :]), axis = 0))
+
+
+def score(x: jnp.ndarray, fft_keys: jnp.ndarray, fft_values: jnp.ndarray, beta: float):
+    fft_x = jnp.fft.fft(x)
+    x_corr_K = jnp.roll(jnp.fft.ifft(fft_x[None, :] * fft_keys[:, :]), 1, axis=-1)
+    weights = jax.nn.softmax(jnp.real(beta * x_corr_K), axis=[0, 1])
+    return weights
+
+
+def loss_ungrouped(
+    x: jnp.ndarray,
+    y: jnp.ndarray,
+    fft_keys: jnp.ndarray,
+    fft_values: jnp.ndarray,
+    beta: float,
+) -> float:
+    pred_y = batched_call_fn(x, fft_keys, fft_values, beta)
+    return jnp.mean(jnp.square(jnp.abs(pred_y - y)))
