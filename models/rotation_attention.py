@@ -171,16 +171,16 @@ def train(
     return keys_hist, values_hist, key_reps, value_reps, betas_hist
 
 
-def plot_predictions(X_test, X_test_pred, Y_test):
+def plot_predictions(X_test, X_test_pred, Y_test, func_name="A_G"):
     fig, axs = plt.subplots(1, 3, figsize=(18, 5))
     n_samples = X_test.shape[0]
 
     segments = [[X_test[i], X_test_pred[i]] for i in range(n_samples)]
     lines = collections.LineCollection(segments, zorder=-1, alpha=0.4)
     axs[0].add_collection(lines)
-    axs[0].scatter(X_test[:, 0], X_test[:, 1], label="original data")
+    axs[0].scatter(X_test[:, 0], X_test[:, 1], label="$X$")
     axs[0].scatter(
-        X_test_pred[:, 0], X_test_pred[:, 1], label="predicted data", marker="x"
+        X_test_pred[:, 0], X_test_pred[:, 1], label=f"${func_name}(X)$", marker="x"
     )
     axs[0].legend()
     axs[0].set(aspect="equal")
@@ -188,9 +188,9 @@ def plot_predictions(X_test, X_test_pred, Y_test):
     segments = [[X_test[i], Y_test[i]] for i in range(n_samples)]
     lines = collections.LineCollection(segments, zorder=-1, alpha=0.4)
     axs[1].add_collection(lines)
-    axs[1].scatter(X_test[:, 0], X_test[:, 1], label="original data")
+    axs[1].scatter(X_test[:, 0], X_test[:, 1], label="$X$")
     axs[1].scatter(
-        Y_test[:, 0], Y_test[:, 1], label="true data", marker="D", color="C2"
+        Y_test[:, 0], Y_test[:, 1], label="$f(X)$", marker="D", color="C2"
     )
     axs[1].legend()
     axs[1].set(aspect="equal")
@@ -199,12 +199,12 @@ def plot_predictions(X_test, X_test_pred, Y_test):
     lines = collections.LineCollection(segments, zorder=-1, alpha=0.4, color="red")
     axs[2].add_collection(lines)
     axs[2].scatter(
-        Y_test[:, 0], Y_test[:, 1], label="true data", marker="D", color="C2"
+        Y_test[:, 0], Y_test[:, 1], label="$f(X)$", marker="D", color="C2"
     )
     axs[2].scatter(
         X_test_pred[:, 0],
         X_test_pred[:, 1],
-        label="predicted data",
+        label=f"${func_name}(X)$",
         color="C1",
         marker="x",
     )
